@@ -26,10 +26,10 @@ pub fn initilize_fs() -> Result<(), std::io::Error>{
 pub fn write_file(filename: &str, o_type: OutputType, data: &[u8]) -> Result<(), std::io::Error>{
     let filepath: String = [INBOUND_FILE_PATH, filename, ".tan"].join("");
 
-    let mut file: std::fs::File = match std::fs::OpenOptions::new().read(true).open(&filepath) {
+    let mut file: std::fs::File = match std::fs::OpenOptions::new().append(true).write(true).read(true).open(&filepath) {
         Ok(f) => f,
         Err(_) => {
-            match std::fs::File::create(&filepath) {
+            match std::fs::OpenOptions::new().write(true).create(true).open(&filepath) {
                 Ok(f) => { print_normal("FileSystem", &format!("File: {:?} created successfully.", filename)); f }
                 Err(e) => return Err(e)
             }
