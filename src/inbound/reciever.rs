@@ -33,7 +33,7 @@ pub async fn start_inbound_server() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 };
 
-                let filename = &hashing::sha256::generate_sha256_hash(&format!("{:?}", std::time::Instant::now()));
+                let filename = "output.tan";//&hashing::sha256::generate_sha256_hash(&format!("{:?}", std::time::Instant::now()));
                 match fs::write_file(filename, fs::OutputType::Inbound, &buffer[0..n]) {
                     Ok(_) => print_normal("FileSystem", &format!("File: {:?} created successfully.", filename)),
                     Err(e) => print_error("FileSystem", &format!("There was an issue making the inbound file: {:?} \n {:?}", filename, e))
