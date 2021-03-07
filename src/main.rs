@@ -1,9 +1,11 @@
 mod hashing;
 mod inbound;
 mod dispatcher;
-mod ledger;
+mod ticket;
 mod log;
-mod ticket_types;
+
+#[macro_use]
+extern crate lazy_static;
 
 fn print_logo() {
     println!(r"

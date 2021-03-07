@@ -311,6 +311,7 @@ name = "tangent-core"
 version = "0.1.0"
 dependencies = [
  "json",
+ "lazy_static",
  "sha2",
  "termcolor",
  "tokio",

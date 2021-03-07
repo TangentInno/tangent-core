@@ -9,6 +9,7 @@ use tokio::net::TcpListener;
 use tokio::prelude::*;
 use super::super::log::*;
 
+use super::super::ticket;
 use super::parser;
 
 static INBOUND_PORT: &str = "7777";
@@ -34,7 +35,8 @@ pub async fn start_inbound_server() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 };
 
-                let message = match parser::parse_message(&String::from_utf8(buffer[0..n].to_vec()).unwrap()) {
+                let value = String::from_utf8(buffer[0..n].to_vec()).unwrap();
+                let message = match parser::parse_message(&value) {
                     Ok(tic) => tic,
                     Err(e) => {
                         print_error("Reciever", &format!("failed to parse recent messages; err = {:?}", e));
@@ -42,7 +44,8 @@ pub async fn start_inbound_server() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 };
 
-                print_normal("Reciever", &format!("[Reviever] Retrived: {:?}", message));
+                print_normal("Reciever", &format!("[Reviever] Retrived: {:?}", message.pType));
+                ticket::handle_ticket_creation(&message);
             }
         });
     }
