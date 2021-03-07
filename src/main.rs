@@ -1,8 +1,9 @@
 mod hashing;
 mod inbound;
 mod dispatcher;
-mod fs;
+mod ledger;
 mod log;
+mod ticket_types;
 
 fn print_logo() {
     println!(r"
@@ -20,16 +21,6 @@ fn print_logo() {
 async fn main() {
     /* Display the tangent logo on run. */
     print_logo();
-
-    /* Create eh folders we will be using */
-    match fs::initilize_fs() {
-        Ok(_) => {},
-        Err(e) => {
-            if e.kind() != std::io::ErrorKind::AlreadyExists {
-                log::print_error("FileSystem", &format!{"There was an issue creating the folders for the file system: {:?}", e})
-            } else { log::print_normal("FileSystem", "There already exists folders for the file system.")}
-        }
-    };
 
     /* When we get a job system going, we will have no need for this. */
     tokio::spawn(async move {

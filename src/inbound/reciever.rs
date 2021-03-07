@@ -8,10 +8,11 @@
 use tokio::net::TcpListener;
 use tokio::prelude::*;
 use super::super::log::*;
-use super::super::fs;
-use super::super::hashing;
+
+use super::parser;
 
 static INBOUND_PORT: &str = "7777";
+
 
 pub async fn start_inbound_server() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind(["0.0.0.0:", INBOUND_PORT].join("")).await?;
@@ -33,12 +34,15 @@ pub async fn start_inbound_server() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 };
 
-                let filename = "output";//&hashing::sha256::generate_sha256_hash(&format!("{:?}", std::time::Instant::now()));
-                match fs::write_file(filename, fs::OutputType::Inbound, &buffer[0..n]) {
-                    Ok(f) => f,
-                    Err(e) => print_error("FileSystem", &format!("There was an issue making the inbound file: {:?} \n {:?}", filename, e))
-                }
-                print_normal("Reciever", &format!("[Reviever] Retrived: {:?}", String::from_utf8(buffer[0..n].to_vec()).unwrap()));
+                let message = match parser::parse_message(&String::from_utf8(buffer[0..n].to_vec()).unwrap()) {
+                    Ok(tic) => tic,
+                    Err(e) => {
+                        print_error("Reciever", &format!("failed to parse recent messages; err = {:?}", e));
+                        return;
+                    }
+                };
+
+                print_normal("Reciever", &format!("[Reviever] Retrived: {:?}", message));
             }
         });
     }
