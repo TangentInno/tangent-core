@@ -3,9 +3,13 @@ mod inbound;
 mod dispatcher;
 mod ticket;
 mod log;
+mod db;
 
 #[macro_use]
 extern crate lazy_static;
+
+#[macro_use]
+extern crate diesel;
 
 fn print_logo() {
     println!(r"
@@ -24,6 +28,9 @@ async fn main() {
     /* Display the tangent logo on run. */
     print_logo();
 
+    /* Instantiate the database. */
+    let post = db::established();
+    
     /* When we get a job system going, we will have no need for this. */
     tokio::spawn(async move {
         let _ = match inbound::reciever::start_inbound_server().await {
