@@ -5,8 +5,7 @@
 *
 */
 
-use super::super::ticket::{Ticket, LedgerType, Location, TicketTags};
-use super::super::hashing;
+use super::super::ticket::{LedgerType, TicketTags};
 
 
 use std::collections::HashMap;
@@ -14,12 +13,13 @@ use std::collections::HashMap;
 #[derive(Debug)]
 pub enum ParserError {
     RequestEmpty,
+    InvalidInput,
     NoArgs
 }
 
 pub struct ParsePackage<'a> {
     pub args: HashMap<&'a str, &'a str>,
-    pub pType: LedgerType,
+    pub p_type: LedgerType,
 }
 
 fn gather_message_arguments(message: &str) -> HashMap<&str, &str> {
@@ -67,10 +67,19 @@ fn infer_ledger_type_from_args(args: &Vec<&str>) -> String {
     String::from(winning_ledger)
 }
 
+/* TODO: Really extensify this to make sure it matches the format we use for parsing. */
+fn validate_input(message: &str) -> bool {
+    message.contains(":")
+}
+
 pub fn parse_message (message: &str) -> Result<ParsePackage, ParserError> {
 
     if message.is_empty() {
         return Err(ParserError::RequestEmpty)
+    }
+
+    if !validate_input(message) {
+        return Err(ParserError::InvalidInput)
     }
 
     let arugments = gather_message_arguments(message);
@@ -83,5 +92,5 @@ pub fn parse_message (message: &str) -> Result<ParsePackage, ParserError> {
         return Err(ParserError::NoArgs)
     }
     
-    Ok(ParsePackage {args: arugments, pType: LedgerType::from_str(&infered_type) })
+    Ok(ParsePackage {args: arugments, p_type: LedgerType::from_str(&infered_type) })
 }

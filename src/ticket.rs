@@ -6,7 +6,7 @@
 */
 
 use super::inbound::parser;
-use super::hashing::sha256;
+use std::any::Any;
 
 lazy_static! {
    pub static ref TicketTags: std::collections::HashMap<&'static str, &'static [&'static str; 3]> = {
@@ -33,8 +33,13 @@ impl LedgerType {
     }
 }
 
+pub trait Parsable<'a>: Send + Sync + 'static + Any {
+    fn as_any(&self) -> &dyn Any;
+    //fn flatted_structure(&self) -> &str;
+}
+
 #[derive(Debug)]
-pub struct Ticket<T> {
+pub struct Ticket<T: Send + Sync + 'static + Any + Sized> {
     pub ledger_identifier: LedgerType,
     pub ticket_identifer: String,
 
@@ -42,12 +47,12 @@ pub struct Ticket<T> {
     pub previous_hash: String,
     pub next_hash: String,
 
-    pub data: T,
+    pub data: Box<T>,
 }
 
-impl <T> Ticket<T> {
-    pub fn new(led: LedgerType, tic: String, owner: String, phash: String, nhash: String, data: T) -> Ticket<T>{
-        Ticket::<T> {ledger_identifier: led, ticket_identifer: tic, owner: owner, previous_hash: phash, next_hash: nhash, data: data}
+impl <T: Send + Sync + 'static + Any + Sized> Ticket<T> {
+    pub fn new(led: LedgerType, tic: String, owner: String, phash: String, data: T) -> Ticket<T> {
+        Ticket::<T> {ledger_identifier: led, ticket_identifer: tic, owner: owner, previous_hash: phash, next_hash: "".to_string(), data: Box::new(data)}
     }
 }
 
@@ -58,16 +63,32 @@ pub struct Location {
     pub speed: f32
 }
 
-pub fn handle_ticket_creation(package: &parser::ParsePackage) {
-    match package.pType {
+impl <'a> Parsable<'a> for Location {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl <'b, T: Send + Sync + 'static + Any + Sized> Parsable<'b> for Ticket<T> {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+/* We assume that this package has all the nessasary arguments. */
+pub fn handle_ticket_creation<'a>(package: &parser::ParsePackage) -> Box<dyn Parsable<'a>>{
+    match package.p_type {
         LedgerType::Location => {
-            Ticket::new(LedgerType::Location,
-                sha256::generate_sha256_hash("Yup").to_string(),
-                package.args["owner"].to_string(),  "".to_string(),  "".to_string(),
+            let ticket = Ticket::new(LedgerType::Location,
+                package.args["identifier"].to_string(),
+                package.args["owner"].to_string(),  package.args["phash"].to_string(),
                 Location {lat: package.args["lat"].parse::<f32>().unwrap(), long: package.args["long"].parse::<f32>().unwrap(), speed: package.args["speed"].parse::<f32>().unwrap()});
+            
+                Box::new(ticket)
+            
         }
         _ => {
-
+            unreachable!()
         }
     }
 }

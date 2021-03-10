@@ -4,11 +4,16 @@ mod dispatcher;
 mod ticket;
 mod log;
 mod db;
+mod ledger_manager;
+mod profiler;
+
+use ledger_manager::{LedgerManager};
+use std::collections::VecDeque;
+use ticket::{ Parsable};
+use std::sync::{Arc, Mutex};
 
 #[macro_use]
 extern crate lazy_static;
-
-#[macro_use]
 extern crate diesel;
 
 fn print_logo() {
@@ -30,17 +35,29 @@ async fn main() {
 
     /* Instantiate the database. */
     let post = db::established();
-    
+
+    /* Create the ledger manager. */
+    let mut ledger = LedgerManager::new(Box::new(&post));
+
+    /* Create a list. */
+    let ledger_queue: Arc<Mutex<VecDeque<Box<dyn Parsable>>>> = Arc::new(Mutex::new(VecDeque::new()));
+
+    let ledger_clone = ledger_queue.clone();
     /* When we get a job system going, we will have no need for this. */
     tokio::spawn(async move {
-        let _ = match inbound::reciever::start_inbound_server().await {
+        let _ = match inbound::reciever::start_inbound_server(ledger_queue).await {
             Ok(n) => n,
             Err(e) => log::print_error("Reciever", &format!("The inbound reciever failed to intilize: {:?}", e))
         };
     });
-
     loop {
-        // if ALL JOBS FINISHED
+        let mut ledger_locked = ledger_clone.lock().unwrap();
+
+        if !ledger_locked.is_empty() {
+            ledger.manage_incoming_ticket::<&dyn Parsable>(ledger_locked.pop_front().unwrap());
+        }
+
+        drop(ledger_locked);
         std::thread::sleep(std::time::Duration::from_millis(1))
     }
 }
