@@ -5,17 +5,17 @@
 *
 */
 use super::ticket::{Ticket, Location, Parsable};
-use diesel::pg::PgConnection;
+use postgres::{Client};
 use std::any::Any;
 use super::profiler;
 use super::db;
 
 pub struct LedgerManager<'a> {
-    database: Box<&'a PgConnection>,
+    database: Box<&'a mut Client>,
 }
 
 impl<'a> LedgerManager<'a> {
-    pub fn new(db: Box<&PgConnection>) -> LedgerManager {
+    pub fn new(db: Box<&mut Client>) -> LedgerManager {
         return LedgerManager {database: db}
     }
 
@@ -24,11 +24,12 @@ impl<'a> LedgerManager<'a> {
 
         let test = profiler::Profiler::invoke("Location Cast");
         match ticket_cast.downcast_ref::<Ticket<Location>>() {
-            Some(yes) => { println!("{:?}", yes); },
+            Some(tic) => { 
+                db::add_ticket(*self.database, tic);
+            },
             None => {}
         }
-        drop(test);
 
-        //db::addTicket(*self.database, ticket_structure);
+        drop(test);
     }
 }

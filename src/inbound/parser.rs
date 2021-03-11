@@ -30,7 +30,7 @@ fn gather_message_arguments(message: &str) -> HashMap<&str, &str> {
 
         for value in splitted {
            let args: Vec<&str> = value.split(":").collect();
-            arugment_map.insert(args[0], args[1]);
+            arugment_map.insert(args[0].trim(), args[1].trim());
         }
     }
 

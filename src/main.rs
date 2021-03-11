@@ -14,7 +14,9 @@ use std::sync::{Arc, Mutex};
 
 #[macro_use]
 extern crate lazy_static;
-extern crate diesel;
+
+#[macro_use]
+extern crate postgres;
 
 fn print_logo() {
     println!(r"
@@ -30,14 +32,16 @@ fn print_logo() {
 
 #[tokio::main]
 async fn main() {
+
+    let args: Vec<String> = std::env::args().collect();
     /* Display the tangent logo on run. */
     print_logo();
-
+    
     /* Instantiate the database. */
-    let post = db::established();
+    let mut post = db::established(&args[1]);
 
     /* Create the ledger manager. */
-    let mut ledger = LedgerManager::new(Box::new(&post));
+    let mut ledger = LedgerManager::new(Box::new(&mut post));
 
     /* Create a list. */
     let ledger_queue: Arc<Mutex<VecDeque<Box<dyn Parsable>>>> = Arc::new(Mutex::new(VecDeque::new()));
