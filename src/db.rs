@@ -18,13 +18,13 @@ pub struct LocationTicket {
 */
 
 pub fn established(postgres_pass: &str) -> Client {
-    Client::connect(&("host=10.0.0.73 user=postgres dbname=tangent_core password=".to_string() + postgres_pass), NoTls).expect(&format!("Error connecting to {}", "10.0.0.73:5432"))
+    Client::connect(&("host=0.0.0.0 user=postgres dbname=tangent_core password=".to_string() + postgres_pass), NoTls).expect(&format!("Error connecting to {}", "10.0.0.73:5432"))
 }
 
 pub fn check_db_ticket_existance(db: &mut Client, id: &str) -> bool {
    match db.query("SELECT * FROM public.location_data WHERE identifier=$1;", &[&id])
    {
-       Ok(rows) => {log::print_warning("Postgres", &format!("FOUND: {:#?} ", rows)); return true},
+       Ok(rows) => {return rows.len() > 0},
        Err(e) => {log::print_error("Postgres", &format!("There was an error checking the database: {:?}", e)); return false}
    }
 }
@@ -35,7 +35,7 @@ fn update_previous_hash<T: Send + Sync + 'static + Sized>(db: &mut Client, ticke
         // Update the past ticket's next_has with our new one.
         // TODO: Make this safe.
         match db.execute("UPDATE public.location_data SET next_hash = $1 WHERE identifier = $2;", &[&ticket.ticket_identifer, &ticket.previous_hash]) {
-            Ok(rows) => {log::print_warning("Postgres", &format!("SELECT: {:#?} ", rows))},
+            Ok(u) => {},
             Err(e) => {log::print_error("Postgres", &format!("There was an updating a ticket in the database: {:?}", e));}
         };
 
