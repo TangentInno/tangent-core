@@ -24,11 +24,12 @@ pub async fn start_inbound_server(ledger_queue: Arc<Mutex<VecDeque<Box<dyn Parsa
     loop {
         let (mut socket, _) = listener.accept().await?;
 
+        socket.set_nodelay(true).unwrap();
+
         let ledger_queue_clone = ledger_queue.clone();
         tokio::spawn(async move {
-
-            let mut buffer: [u8; 1024] = [0; 1024];
-
+            
+            let mut buffer: Vec<u8> = Vec::new();
             loop {
                 let n = match socket.read(&mut buffer).await {
                     Ok(n) if n == 0 => return,
