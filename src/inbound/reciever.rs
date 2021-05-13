@@ -9,22 +9,16 @@ use tokio::net::TcpListener;
 use tokio::prelude::*;
 use super::super::log::*;
 
-use super::super::ticket::{handle_ticket_creation, Parsable};
 use super::parser;
-
-use std::sync::{Arc, Mutex};
-use std::collections::VecDeque;
 
 static INBOUND_PORT: &str = "7777";
 
-pub async fn start_inbound_server(ledger_queue: Arc<Mutex<VecDeque<Box<dyn Parsable<'static>>>>>)  -> Result< (), Box<dyn std::error::Error + Send + Sync + 'static>> {
+pub async fn start_inbound_server()  -> Result< (), Box<dyn std::error::Error + Send + Sync + 'static>> {
     let listener = TcpListener::bind(["0.0.0.0:", INBOUND_PORT].join("")).await?;
     print_normal("Reciever", &format!("inbound listener started successfully on port: {:?}", INBOUND_PORT));
 
     loop {
         let (mut socket, _) = listener.accept().await?;
-
-        let ledger_queue_clone = ledger_queue.clone();
         tokio::spawn(async move {
             
             let mut buffer = [0; 12000];
@@ -47,8 +41,6 @@ pub async fn start_inbound_server(ledger_queue: Arc<Mutex<VecDeque<Box<dyn Parsa
                     }
                 };
                 
-                let ticket: Box<dyn Parsable> = handle_ticket_creation(&message);
-                ledger_queue_clone.lock().unwrap().push_back(ticket);
             }
         });
     }
