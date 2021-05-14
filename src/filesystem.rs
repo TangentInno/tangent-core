@@ -14,6 +14,7 @@ use super::inbound::parser::ParsePackage;
 
 fn create_directory(identifier: &str) -> std::io::Result<()> {
     let mut user_dir = current_dir().unwrap();
+    user_dir.push("users");
     user_dir.push(identifier);
 
     println!("{:?}", user_dir);
@@ -30,6 +31,7 @@ pub fn save_payload(payload: &ParsePackage) -> Result<(), String> {
     create_directory(directory_name).unwrap();
 
     let mut file_path = current_dir().unwrap();
+    file_path.push("users");
     file_path.push(directory_name);
     file_path.push(ledger_name);
     file_path.set_extension("tan");
