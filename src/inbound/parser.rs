@@ -13,19 +13,34 @@ pub enum ParserError {
     NoArgs
 }
 
-pub struct ParsePackage<'a> {
-    pub args: HashMap<&'a str, &'a str>,
+#[derive(Debug)]
+pub struct ParsePackage {
+    pub args: HashMap<String, String>
 }
 
-fn gather_message_arguments(message: &str) -> HashMap<&str, &str> {
-    let mut arugment_map: HashMap<&str, &str> = HashMap::new();
+impl ToString for ParsePackage {
+    fn to_string(&self) -> String {
+        let mut returnable: String = String::new();
+
+        returnable.push_str("{\n");
+        for (_, value) in self.args.iter().enumerate() {
+            returnable.push_str(&format!("\t{:#?}\n", &[value.0.to_string(), value.1.to_string()].join(":")));
+        }
+        returnable.push_str("}\n");
+
+        returnable
+    }
+}
+
+fn gather_message_arguments(message: &str) -> HashMap<String, String> {
+    let mut arugment_map: HashMap<String, String> = HashMap::new();
    
     {
         let splitted: Vec<&str> = message.split("/").collect();
 
         for value in splitted {
            let args: Vec<&str> = value.split(":").collect();
-            arugment_map.insert(args[0].trim(), args[1].trim());
+            arugment_map.insert(args[0].trim().to_string(), args[1].trim().to_string());
         }
     }
 
@@ -48,8 +63,6 @@ pub fn parse_message (message: &str) -> Result<ParsePackage, ParserError> {
     }
 
     let arugments = gather_message_arguments(message);
-
-    let keys: Vec<&str> = arugments.keys().cloned().collect();
 
     if arugments.is_empty() {
         return Err(ParserError::NoArgs)
